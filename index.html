@@ -28,13 +28,17 @@
             transform: translate(-50%, -50%); width: 90%; max-width: 320px;
             background: white; padding: 25px; border-radius: 15px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 20;
+            max-height: 90vh; overflow-y: auto; /* Scroll if tall */
         }
         #memory-modal h3 { margin-top: 0; color: #333; }
-        input[type="text"], textarea { 
+        
+        /* Inputs */
+        input[type="text"], textarea, input[type="date"] { 
             width: 100%; margin-bottom: 15px; padding: 10px; 
             box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px;
             font-family: inherit;
         }
+        
         /* Hide file input during edit mode */
         .file-input-container { margin-bottom: 15px; }
         
@@ -52,7 +56,7 @@
         .mapboxgl-popup { max-width: 300px !important; z-index: 15; }
         .mapboxgl-popup-content { padding: 15px; border-radius: 12px; max-height: 400px; overflow-y: auto; }
         .popup-img { width: 100%; border-radius: 8px; margin-top: 8px; display: block; }
-        .popup-date { font-size: 12px; color: #888; margin-bottom: 5px; display: block; }
+        .popup-date { font-size: 12px; color: #888; margin-bottom: 5px; display: block; font-weight: bold; }
         .popup-story { font-size: 14px; line-height: 1.5; color: #333; margin-bottom: 10px; }
         
         /* Edit/Delete Actions */
@@ -82,7 +86,14 @@
 
 <div id="memory-modal">
     <h3 id="modal-title">❤️ Add a Memory</h3>
-    <input type="text" id="title" placeholder="Title (e.g., Where we met)">
+    
+    <label style="font-size:12px; color:#666;">Title:</label>
+    <input type="text" id="title" placeholder="e.g. Empire State Building">
+    
+    <label style="font-size:12px; color:#666;">Date:</label>
+    <input type="date" id="date-input">
+
+    <label style="font-size:12px; color:#666;">Story:</label>
     <textarea id="story" rows="4" placeholder="Type your story here..."></textarea>
     
     <div class="file-input-container" id="file-container">
@@ -99,7 +110,6 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    // ADDED: doc, deleteDoc, updateDoc
     import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
@@ -131,26 +141,29 @@
     });
     map.addControl(new mapboxgl.NavigationControl());
     
-    // Add Search Bar
+    // --- UPDATED SEARCH BAR (With Types) ---
     const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
         mapboxgl: mapboxgl,
         marker: false,
-        placeholder: 'Search for a place...'
+        placeholder: 'Search for places...',
+        // This line fixes the search to find POIs (Points of Interest)
+        types: 'poi,address,place,locality,neighborhood'
     });
     map.addControl(geocoder, 'top-left');
 
     // --- STATE VARIABLES ---
     let isAddingMode = false;
-    let editingId = null; // Stores ID if we are editing
+    let editingId = null; 
     let tempLngLat = null;
-    let localMemories = {}; // Store data locally to make editing easier
+    let localMemories = {}; 
 
     const modal = document.getElementById('memory-modal');
     const addBtn = document.getElementById('add-mode-btn');
     const saveBtn = document.getElementById('save-btn');
     const modalTitle = document.getElementById('modal-title');
     const fileContainer = document.getElementById('file-container');
+    const dateInput = document.getElementById('date-input');
 
     // 1. Toggle "Add Mode"
     addBtn.addEventListener('click', () => {
@@ -163,18 +176,18 @@
         }
     });
 
-    // 2. Click Map to Open Form (Create New)
+    // 2. Click Map to Open Form
     map.on('click', (e) => {
         if (!isAddingMode) return;
-        
         tempLngLat = e.lngLat;
-        openModal(); // Open in "New" mode
+        openModal(); 
     });
 
     // 3. Save Logic (Handles BOTH New and Edit)
     saveBtn.addEventListener('click', async () => {
         const title = document.getElementById('title').value;
         const story = document.getElementById('story').value;
+        const dateVal = document.getElementById('date-input').value;
         const files = document.getElementById('photo-input').files;
 
         if (!title) return alert("Please add a title!");
@@ -182,20 +195,23 @@
         saveBtn.innerText = "Saving..."; 
         saveBtn.disabled = true;
 
+        // Use selected date OR today's date if empty
+        const finalDate = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
+
         try {
-            // CASE A: EDITING EXISTING MEMORY (Update Text Only)
+            // CASE A: EDITING
             if (editingId) {
                 const memoryRef = doc(db, "memories", editingId);
                 await updateDoc(memoryRef, {
                     title: title,
-                    story: story
+                    story: story,
+                    date: finalDate // Update date
                 });
                 alert("Memory updated!");
             } 
-            // CASE B: CREATING NEW MEMORY
+            // CASE B: NEW MEMORY
             else {
                 let imageUrls = [];
-                // Upload Photos
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     const fileName = `memories/${Date.now()}-${file.name}`;
@@ -211,13 +227,13 @@
                     title: title,
                     story: story,
                     images: imageUrls,
-                    date: new Date().toISOString()
+                    date: finalDate // Save date
                 });
                 alert("Memory saved! ❤️");
             }
 
             closeModal();
-            loadMarkers(); // Refresh map
+            loadMarkers(); 
         } catch (e) {
             console.error("Error:", e);
             alert("Something went wrong: " + e.message);
@@ -226,12 +242,12 @@
         }
     });
 
-    // 4. Global Functions for Edit/Delete (Attached to Window)
+    // 4. Global Functions
     window.deleteMemory = async (id) => {
         if (confirm("Are you sure you want to delete this memory?")) {
             try {
                 await deleteDoc(doc(db, "memories", id));
-                loadMarkers(); // Refresh
+                loadMarkers(); 
             } catch (e) {
                 alert("Error deleting: " + e.message);
             }
@@ -242,21 +258,25 @@
         const data = localMemories[id];
         if (!data) return;
 
-        editingId = id; // Set edit mode
+        editingId = id; 
         
         // Populate Form
         document.getElementById('title').value = data.title;
         document.getElementById('story').value = data.story;
         
-        // Hide file input (simplified editing)
-        fileContainer.style.display = 'none';
+        // Populate Date (Format YYYY-MM-DD)
+        if (data.date) {
+            document.getElementById('date-input').value = data.date.split('T')[0];
+        } else {
+            document.getElementById('date-input').value = '';
+        }
         
-        openModal(true); // true = edit mode
+        fileContainer.style.display = 'none';
+        openModal(true); 
     };
 
     // 5. Load Markers
     async function loadMarkers() {
-        // Clear old markers (hacky but simple: remove all marker elements)
         const existing = document.querySelectorAll('.mapboxgl-marker');
         existing.forEach(e => e.remove());
 
@@ -265,11 +285,8 @@
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const id = docSnap.id;
-            
-            // Store for local editing
             localMemories[id] = data;
 
-            // Prepare Popup Images
             let imagesHtml = '';
             let markerElement;
 
@@ -277,26 +294,24 @@
                 data.images.forEach(url => {
                     imagesHtml += `<img src="${url}" class="popup-img">`;
                 });
-                // Photo Marker
                 const el = document.createElement('div');
                 el.className = 'custom-marker';
                 el.style.backgroundImage = `url(${data.images[0]})`;
                 markerElement = new mapboxgl.Marker(el);
             } else {
-                // Default Marker
                 markerElement = new mapboxgl.Marker({ color: "#ff4757", scale: 0.8 });
             }
 
+            // Clean Date for display
             const dateStr = data.date ? new Date(data.date).toLocaleDateString() : '';
 
-            // POPUP CONTENT WITH BUTTONS
             const popupContent = `
                 <h3>${data.title}</h3>
                 <span class="popup-date">${dateStr}</span>
                 <div class="popup-story">${data.story}</div>
                 ${imagesHtml}
                 <div class="popup-actions">
-                    <button class="action-btn edit-btn" onclick="window.editMemory('${id}')">✏️ Edit Text</button>
+                    <button class="action-btn edit-btn" onclick="window.editMemory('${id}')">✏️ Edit</button>
                     <button class="action-btn delete-btn" onclick="window.deleteMemory('${id}')">🗑️ Delete</button>
                 </div>
             `;
@@ -308,7 +323,6 @@
         });
     }
 
-    // Helper Functions
     function openModal(isEdit = false) {
         modal.style.display = 'block';
         if (isEdit) {
@@ -318,9 +332,10 @@
             modalTitle.innerText = "❤️ Add a Memory";
             saveBtn.innerText = "Save Memory";
             fileContainer.style.display = 'block';
+            
+            // Default date to today for new memories
+            document.getElementById('date-input').valueAsDate = new Date();
         }
-        
-        // Reset Map Add Button
         isAddingMode = false;
         addBtn.innerText = "+ Add Memory";
         addBtn.style.background = "#ff4757";
@@ -335,17 +350,16 @@
         editingId = null;
         document.getElementById('title').value = '';
         document.getElementById('story').value = '';
+        document.getElementById('date-input').value = '';
         document.getElementById('photo-input').value = '';
         saveBtn.innerText = "Save Memory";
         saveBtn.disabled = false;
         fileContainer.style.display = 'block';
-        
         isAddingMode = false;
         addBtn.innerText = "+ Add Memory";
         addBtn.style.background = "#ff4757";
     }
 
-    // Load on start
     loadMarkers();
 
 </script>
