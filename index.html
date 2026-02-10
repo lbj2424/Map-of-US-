@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>The Map of Us</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        /* The "Add Memory" Button */
+        #add-btn {
+            position: absolute; bottom: 30px; right: 30px;
+            background: white; padding: 15px 25px;
+            border-radius: 50px; cursor: pointer;
+            font-family: sans-serif; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="add-btn">+ Add Memory</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js"></script>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+<script>
+    // 1. Initialize Mapbox
+    mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+    
+    const map = new mapboxgl.Map({
+        container: 'map',
+        // Replace with your custom "Black & White" style URL from Mapbox Studio
+        style: 'mapbox://styles/yourusername/styleid', 
+        center: [-98.5795, 39.8283], // Center of USA
+        zoom: 3
+    });
+
+    // 2. Add Navigation Controls (Zoom in/out)
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // 3. Logic to load pins from Firebase would go here...
+    // db.collection("memories").get().then((querySnapshot) => { ... })
+
+    // 4. Click map to add pin logic...
+    map.on('click', (e) => {
+        // If in "Add Mode", open form at e.lngLat
+    });
+
+</script>
+</body>
+</html>
