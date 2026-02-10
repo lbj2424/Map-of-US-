@@ -22,7 +22,7 @@
         /* The Form Modal */
         #memory-modal {
             display: none; position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); width: 320px;
+            transform: translate(-50%, -50%); width: 90%;max-width: 320px;
             background: white; padding: 25px; border-radius: 15px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 20;
         }
@@ -86,8 +86,8 @@
     };
 
     // --- PASTE YOUR MAPBOX DATA BELOW ---
-    mapboxgl.accessToken = pk.eyJ1IjoibHVrZWxiaiIsImEiOiJjbWxmdWV4bmwwNjF4M2dvcm1qcms1bGZ3In0.cBF38tj67qY4vvRoCPm_2A; // Starts with pk.
-    const MAP_STYLE = mapbox://styles/lukelbj/cmlfuj85x00dy01slf0si1c0l; // Starts with mapbox://styles/
+    mapboxgl.accessToken = 'pk.eyJ1IjoibHVrZWxiaiIsImEiOiJjbWxmdWV4bmwwNjF4M2dvcm1qcms1bGZ3In0.cBF38tj67qY4vvRoCPm_2A'; // Starts with pk.
+    const MAP_STYLE = 'mapbox://styles/lukelbj/cmlfuj85x00dy01slf0si1c0l'; // Starts with mapbox://styles/
     // ------------------------------------
 
     // Initialize Firebase
