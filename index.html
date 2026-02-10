@@ -6,53 +6,241 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
         
         /* The "Add Memory" Button */
-        #add-btn {
-            position: absolute; bottom: 30px; right: 30px;
-            background: white; padding: 15px 25px;
-            border-radius: 50px; cursor: pointer;
-            font-family: sans-serif; font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 10;
+        #add-mode-btn {
+            position: absolute; bottom: 40px; right: 30px;
+            background: #ff4757; color: white; padding: 15px 30px;
+            border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 10;
+            transition: all 0.2s ease;
         }
+        #add-mode-btn:hover { transform: scale(1.05); background: #ff6b81; }
+
+        /* The Form Modal */
+        #memory-modal {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 320px;
+            background: white; padding: 25px; border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 20;
+        }
+        #memory-modal h3 { margin-top: 0; color: #333; }
+        input[type="text"], textarea { 
+            width: 100%; margin-bottom: 15px; padding: 10px; 
+            box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px;
+            font-family: inherit;
+        }
+        input[type="file"] { margin-bottom: 15px; }
+        
+        /* Buttons */
+        button#save-btn { 
+            background: #2ed573; color: white; border: none; padding: 12px; 
+            width: 100%; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 14px;
+        }
+        button#cancel-btn {
+            background: transparent; color: #888; border: none; padding: 10px;
+            width: 100%; cursor: pointer; margin-top: 5px; font-size: 12px;
+        }
+
+        /* Popup Styling */
+        .mapboxgl-popup { max-width: 300px !important; }
+        .mapboxgl-popup-content { padding: 15px; border-radius: 12px; max-height: 400px; overflow-y: auto; }
+        .popup-img { width: 100%; border-radius: 8px; margin-top: 8px; display: block; }
+        .popup-date { font-size: 12px; color: #888; margin-bottom: 5px; display: block; }
+        .popup-story { font-size: 14px; line-height: 1.5; color: #333; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
-<div id="add-btn">+ Add Memory</div>
+<div id="add-mode-btn">+ Add Memory</div>
 
-<script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js"></script>
+<div id="memory-modal">
+    <h3>❤️ Add a Memory</h3>
+    <input type="text" id="title" placeholder="Title (e.g., Where we met)">
+    <textarea id="story" rows="4" placeholder="Type your story here..."></textarea>
+    <label style="font-size:12px; color:#666; display:block; margin-bottom:5px;">Select Photos:</label>
+    <input type="file" id="photo-input" multiple accept="image/*">
+    <button id="save-btn">Save Memory</button>
+    <button id="cancel-btn" onclick="closeModal()">Cancel</button>
+</div>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
-<script>
-    // 1. Initialize Mapbox
-    mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
-    
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+
+    // --- YOUR FIREBASE CONFIG (Pre-filled) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyD__85oYqn2rBgEdWYAG9qF8NzRROtVF-4",
+      authDomain: "map-of-us-d3536.firebaseapp.com",
+      projectId: "map-of-us-d3536",
+      storageBucket: "map-of-us-d3536.firebasestorage.app",
+      messagingSenderId: "121698876853",
+      appId: "1:121698876853:web:6bbff8558ad0b53d48adfc",
+      measurementId: "G-S3H9V021M6"
+    };
+
+    // --- PASTE YOUR MAPBOX DATA BELOW ---
+    mapboxgl.accessToken = pk.eyJ1IjoibHVrZWxiaiIsImEiOiJjbWxmdWV4bmwwNjF4M2dvcm1qcms1bGZ3In0.cBF38tj67qY4vvRoCPm_2A; // Starts with pk.
+    const MAP_STYLE = mapbox://styles/lukelbj/cmlfuj85x00dy01slf0si1c0l; // Starts with mapbox://styles/
+    // ------------------------------------
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // Initialize Map
     const map = new mapboxgl.Map({
         container: 'map',
-        // Replace with your custom "Black & White" style URL from Mapbox Studio
-        style: 'mapbox://styles/yourusername/styleid', 
+        style: MAP_STYLE,
         center: [-98.5795, 39.8283], // Center of USA
-        zoom: 3
+        zoom: 3.5
     });
-
-    // 2. Add Navigation Controls (Zoom in/out)
     map.addControl(new mapboxgl.NavigationControl());
 
-    // 3. Logic to load pins from Firebase would go here...
-    // db.collection("memories").get().then((querySnapshot) => { ... })
+    // --- APP LOGIC ---
+    let isAddingMode = false;
+    let tempLngLat = null;
+    const modal = document.getElementById('memory-modal');
+    const addBtn = document.getElementById('add-mode-btn');
 
-    // 4. Click map to add pin logic...
-    map.on('click', (e) => {
-        // If in "Add Mode", open form at e.lngLat
+    // 1. Toggle "Add Mode"
+    addBtn.addEventListener('click', () => {
+        isAddingMode = !isAddingMode;
+        if (isAddingMode) {
+            addBtn.innerText = "👇 Click a location on the map";
+            addBtn.style.background = "#ffa502";
+        } else {
+            addBtn.innerText = "+ Add Memory";
+            addBtn.style.background = "#ff4757";
+        }
     });
 
+    // 2. Click Map to Open Form
+    map.on('click', (e) => {
+        if (!isAddingMode) return;
+        
+        tempLngLat = e.lngLat;
+        modal.style.display = 'block';
+        
+        // Reset UI
+        isAddingMode = false; 
+        addBtn.innerText = "+ Add Memory";
+        addBtn.style.background = "#ff4757";
+    });
+
+    // 3. Save to Firebase
+    document.getElementById('save-btn').addEventListener('click', async () => {
+        const title = document.getElementById('title').value;
+        const story = document.getElementById('story').value;
+        const files = document.getElementById('photo-input').files;
+        const saveBtn = document.getElementById('save-btn');
+
+        if (!title) return alert("Please add a title!");
+
+        saveBtn.innerText = "Uploading photos... please wait"; 
+        saveBtn.disabled = true;
+
+        // Upload Images Loop
+        let imageUrls = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            // Create a unique name for the image
+            const fileName = `memories/${Date.now()}-${file.name}`;
+            const storageRef = ref(storage, fileName);
+            
+            try {
+                await uploadBytes(storageRef, file);
+                const url = await getDownloadURL(storageRef);
+                imageUrls.push(url);
+            } catch (err) {
+                console.error("Upload failed", err);
+                alert("Error uploading image: " + err.message);
+                saveBtn.innerText = "Save Memory";
+                saveBtn.disabled = false;
+                return;
+            }
+        }
+
+        // Save Data to Firestore
+        try {
+            await addDoc(collection(db, "memories"), {
+                lat: tempLngLat.lat,
+                lng: tempLngLat.lng,
+                title: title,
+                story: story,
+                images: imageUrls,
+                date: new Date().toISOString()
+            });
+            
+            // Reset Form
+            modal.style.display = 'none';
+            document.getElementById('title').value = '';
+            document.getElementById('story').value = '';
+            document.getElementById('photo-input').value = '';
+            saveBtn.innerText = "Save Memory";
+            saveBtn.disabled = false;
+            
+            // Refresh markers immediately
+            loadMarkers(); 
+            alert("Memory saved successfully! ❤️");
+
+        } catch (e) {
+            console.error("Error adding document: ", e);
+            alert("Error saving data: " + e.message);
+            saveBtn.innerText = "Save Memory";
+            saveBtn.disabled = false;
+        }
+    });
+
+    // 4. Load Markers from Firebase
+    async function loadMarkers() {
+        const querySnapshot = await getDocs(collection(db, "memories"));
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            
+            // Create HTML for Popup
+            let imagesHtml = '';
+            if (data.images && data.images.length > 0) {
+                data.images.forEach(url => {
+                    imagesHtml += `<img src="${url}" class="popup-img">`;
+                });
+            }
+
+            const dateStr = data.date ? new Date(data.date).toLocaleDateString() : '';
+
+            const popupContent = `
+                <h3>${data.title}</h3>
+                <span class="popup-date">${dateStr}</span>
+                <div class="popup-story">${data.story}</div>
+                ${imagesHtml}
+            `;
+
+            // Create Marker
+            new mapboxgl.Marker({ color: "#ff4757", scale: 0.8 })
+                .setLngLat([data.lng, data.lat])
+                .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent))
+                .addTo(map);
+        });
+    }
+
+    // Load on start
+    loadMarkers();
+
+    // Helper to close modal
+    window.closeModal = () => {
+        modal.style.display = 'none';
+        isAddingMode = false;
+        addBtn.innerText = "+ Add Memory";
+        addBtn.style.background = "#ff4757";
+    }
 </script>
+
 </body>
 </html>
