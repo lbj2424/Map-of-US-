@@ -29,41 +29,78 @@
         }
         #view-toggle-btn:hover { background: #333; color: white; }
 
-        /* Add Button */
+        /* --- ADD BUTTON (UPDATED FOR MOBILE) --- */
         #add-mode-btn {
             position: fixed; bottom: 40px; right: 30px;
             background: #ff4757; color: white; padding: 15px 30px;
             border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 100;
             transition: all 0.2s ease;
+            white-space: nowrap; /* Prevents text wrapping */
         }
         #add-mode-btn:hover { transform: scale(1.05); background: #ff6b81; }
 
-        /* --- POPUP STYLING (UPDATED) --- */
-        .mapboxgl-popup { 
-            max-width: 500px !important; /* Wider on desktop */
+        /* --- SEARCH BAR TWEAKS --- */
+        /* Force search bar to be visible and wider */
+        .mapboxgl-ctrl-geocoder {
+            min-width: 300px !important; /* Wider on desktop */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+            border-radius: 20px !important;
         }
-        /* Mobile override */
-        @media only screen and (max-width: 600px) {
-            .mapboxgl-popup { max-width: 300px !important; }
-        }
-        
+
+        /* --- POPUP STYLING --- */
+        .mapboxgl-popup { max-width: 500px !important; }
         .mapboxgl-popup-content { 
             padding: 15px; border-radius: 12px; 
             max-height: 400px; overflow-y: auto; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
-        /* Popup Image Scroll Container */
         .popup-img-scroll {
             display: flex; gap: 5px; overflow-x: auto; 
-            margin: 10px 0; padding-bottom: 5px;
-            scroll-behavior: smooth;
+            margin: 10px 0; padding-bottom: 5px; scroll-behavior: smooth;
         }
         .popup-img-item {
             height: 120px; width: auto; border-radius: 6px; 
             cursor: pointer; transition: transform 0.2s;
         }
-        .popup-img-item:hover { transform: scale(1.05); }
+
+        /* --- MOBILE SPECIFIC FIXES --- */
+        @media only screen and (max-width: 600px) {
+            /* 1. Center the Add Button at the bottom */
+            #add-mode-btn {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                bottom: 30px;
+                width: max-content;
+                font-size: 14px;
+                padding: 12px 25px;
+            }
+
+            /* 2. Fix Search Bar position & width */
+            .mapboxgl-ctrl-top-left {
+                width: 100%;
+                top: 10px; /* Push down slightly */
+            }
+            .mapboxgl-ctrl-geocoder {
+                width: 90% !important; /* Fit screen */
+                min-width: unset !important;
+                margin: 0 auto !important; /* Center it */
+            }
+
+            /* 3. Adjust Toggle Button to not overlap Search */
+            #view-toggle-btn {
+                top: auto; 
+                bottom: 90px; /* Place above the Add Button */
+                right: 20px;
+                padding: 8px 15px;
+                font-size: 12px;
+                background: rgba(255,255,255,0.9);
+            }
+            
+            /* 4. Fix Popup width */
+            .mapboxgl-popup { max-width: 280px !important; }
+        }
 
         /* List View Card Styling */
         .memory-card {
@@ -79,7 +116,7 @@
         .memory-body { padding: 20px; line-height: 1.6; color: #555; }
         .memory-footer { padding: 15px 20px; border-top: 1px solid #f5f5f5; text-align: right; }
 
-        /* Modal & Form */
+        /* Modal & Helpers */
         #memory-modal {
             display: none; position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%); width: 90%; max-width: 320px;
@@ -93,6 +130,7 @@
         .custom-marker { width: 50px; height: 50px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.4); background-size: cover; background-position: center; cursor: pointer; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
         .edit-btn { color: #3742fa; } .delete-btn { color: #ff4757; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
