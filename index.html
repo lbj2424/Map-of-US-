@@ -42,63 +42,93 @@
 
         /* --- SEARCH BAR TWEAKS --- */
         .mapboxgl-ctrl-geocoder {
-            min-width: 400px !important; /* Wider search bar */
+            min-width: 400px !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
             border-radius: 20px !important;
             font-size: 16px !important;
         }
 
-        /* --- POPUP STYLING (THE BIG UPGRADE) --- */
+        /* --- POPUP STYLING (IMAX MODE) --- */
         .mapboxgl-popup { 
-            max-width: 900px !important; /* Huge width for desktop */
-            width: 80% !important; /* Takes up most of the screen width if needed */
+            max-width: none !important; 
+            width: 90% !important; /* Fill the screen */
+            left: 5% !important; /* Center horizontally */
+            top: 5% !important; /* Center vertically-ish */
+            transform: none !important; 
+            position: fixed !important; /* Lock to screen */
+            z-index: 5000;
         }
         
+        /* Hide the little triangle pointer */
+        .mapboxgl-popup-tip { display: none !important; }
+        
         .mapboxgl-popup-content { 
-            padding: 30px; border-radius: 15px; 
-            max-height: 80vh; /* Allow it to get tall */
+            padding: 40px; 
+            border-radius: 20px; 
+            height: 85vh; /* Tall vertical window */
+            max-height: 85vh; 
             overflow-y: auto; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column;
         }
 
         /* Popup Header */
         .mapboxgl-popup-content h3 {
-            font-size: 32px; margin-bottom: 5px; color: #2d3436;
+            font-size: 42px; margin-bottom: 10px; color: #2d3436;
         }
         .popup-date {
-            font-size: 16px; color: #888; font-weight: 500; margin-bottom: 20px; display: block;
+            font-size: 18px; color: #888; font-weight: 500; margin-bottom: 25px;
         }
 
-        /* Popup Image Scroll Container - Bigger Photos */
+        /* Popup Image Scroll - Big Photos */
         .popup-img-scroll {
-            display: flex; gap: 15px; overflow-x: auto; 
-            margin: 20px 0; padding-bottom: 15px; scroll-behavior: smooth;
+            display: flex; gap: 20px; overflow-x: auto; 
+            margin: 0; padding-bottom: 20px; 
+            flex-shrink: 0; 
         }
         .popup-img-item {
-            height: 350px; /* HUGE photos */
-            width: auto; border-radius: 10px; 
+            height: 450px; /* Big cinematic photos */
+            width: auto; border-radius: 12px; 
             cursor: pointer; transition: transform 0.2s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
-        .popup-img-item:hover { transform: scale(1.02); }
+        .popup-img-item:hover { transform: scale(1.01); }
 
-        /* Popup Text */
+        /* Popup Text - THE BIG TEXT YOU WANTED */
         .popup-story { 
-            font-size: 28px; /* Was 20px, bumped to 24px */
-            line-height: 1.8; /* Increased spacing between lines */
-            color: #444; 
-            margin-top: 20px; 
-            font-weight: 400; /* Regular weight, but you could try 500 for semi-bold */
+            font-size: 24px; /* Big, easy to read text */
+            line-height: 1.6; 
+            color: #333; 
+            margin-top: 30px; 
+            max-width: 1200px;
         }
 
-        /* --- MOBILE SPECIFIC FIXES (Keep it small on phones) --- */
+        /* --- PINS (Kept at your preferred size) --- */
+        .custom-marker {
+            width: 55px; /* Kept small as requested */
+            height: 55px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .custom-marker:hover { transform: scale(1.1); z-index: 99; }
+
+        /* --- MOBILE OVERRIDES (Keep it normal on phone) --- */
         @media only screen and (max-width: 600px) {
-            /* Reset popup size for phone */
-            .mapboxgl-popup { max-width: 300px !important; width: auto !important; }
+            .mapboxgl-popup { 
+                position: absolute !important; width: auto !important; max-width: 300px !important;
+                left: auto !important; top: auto !important; transform: translate(-50%, -100%) !important;
+            }
+            .mapboxgl-popup-tip { display: block !important; }
+            .mapboxgl-popup-content { height: auto; max-height: 400px; padding: 15px; display: block; }
+            .popup-img-item { height: 140px; }
+            .popup-story { font-size: 14px; margin-top: 10px; }
             .mapboxgl-popup-content h3 { font-size: 20px; }
-            .popup-date { font-size: 12px; }
-            .popup-img-item { height: 140px; } /* Smaller photos for phone */
-            .popup-story { font-size: 14px; }
+            .custom-marker { width: 50px; height: 50px; border-width: 2px; }
             
             /* Center the Add Button */
             #add-mode-btn {
@@ -140,7 +170,6 @@
         input, textarea { width: 100%; margin-bottom: 15px; padding: 12px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 16px; }
         button#save-btn { background: #2ed573; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 16px; }
         button#cancel-btn { background: transparent; color: #888; border: none; padding: 10px; width: 100%; cursor: pointer; margin-top: 5px; }
-        .custom-marker { width: 55px; height: 55px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.4); background-size: cover; background-position: center; cursor: pointer; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 4px; }
         .edit-btn { color: #3742fa; } .delete-btn { color: #ff4757; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
