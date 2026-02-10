@@ -14,27 +14,22 @@
         /* View Containers */
         #map-view { position: absolute; top: 0; bottom: 0; width: 100%; }
         #list-view { 
-            display: none; /* Hidden by default */
-            padding: 80px 20px 20px 20px; 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: #f9f9f9;
-            min-height: 100vh;
+            display: none; padding: 80px 20px 20px 20px; 
+            max-width: 600px; margin: 0 auto; background: #f9f9f9; min-height: 100vh;
         }
 
-        /* Toggle Button (Floating Top Right) */
+        /* Toggle Button */
         #view-toggle-btn {
             position: fixed; top: 20px; right: 20px;
             background: white; padding: 10px 20px;
             border-radius: 30px; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             font-weight: bold; z-index: 100;
-            border: 2px solid #333;
-            transition: all 0.2s;
+            border: 2px solid #333; transition: all 0.2s;
         }
         #view-toggle-btn:hover { background: #333; color: white; }
 
-        /* Add Button (Floating Bottom Right) */
+        /* Add Button */
         #add-mode-btn {
             position: fixed; bottom: 40px; right: 30px;
             background: #ff4757; color: white; padding: 15px 30px;
@@ -44,21 +39,43 @@
         }
         #add-mode-btn:hover { transform: scale(1.05); background: #ff6b81; }
 
+        /* --- POPUP STYLING (UPDATED) --- */
+        .mapboxgl-popup { 
+            max-width: 500px !important; /* Wider on desktop */
+        }
+        /* Mobile override */
+        @media only screen and (max-width: 600px) {
+            .mapboxgl-popup { max-width: 300px !important; }
+        }
+        
+        .mapboxgl-popup-content { 
+            padding: 15px; border-radius: 12px; 
+            max-height: 400px; overflow-y: auto; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        /* Popup Image Scroll Container */
+        .popup-img-scroll {
+            display: flex; gap: 5px; overflow-x: auto; 
+            margin: 10px 0; padding-bottom: 5px;
+            scroll-behavior: smooth;
+        }
+        .popup-img-item {
+            height: 120px; width: auto; border-radius: 6px; 
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .popup-img-item:hover { transform: scale(1.05); }
+
         /* List View Card Styling */
         .memory-card {
             background: white; border-radius: 15px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            margin-bottom: 30px; overflow: hidden;
-            animation: fadeIn 0.5s ease;
+            margin-bottom: 30px; overflow: hidden; animation: fadeIn 0.5s ease;
         }
         .memory-header { padding: 20px; border-bottom: 1px solid #eee; }
         .memory-date { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .memory-title { margin: 5px 0 0 0; font-size: 20px; color: #333; }
         .memory-img-container { width: 100%; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; }
-        .memory-card-img { 
-            display: inline-block; height: 300px; width: auto; 
-            margin-right: 2px; object-fit: cover; 
-        }
+        .memory-card-img { display: inline-block; height: 300px; width: auto; margin-right: 2px; object-fit: cover; }
         .memory-body { padding: 20px; line-height: 1.6; color: #555; }
         .memory-footer { padding: 15px 20px; border-top: 1px solid #f5f5f5; text-align: right; }
 
@@ -70,21 +87,10 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 200;
             max-height: 90vh; overflow-y: auto;
         }
-        #memory-modal h3 { margin-top: 0; color: #333; }
         input, textarea { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
         button#save-btn { background: #2ed573; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 8px; font-weight: bold; }
         button#cancel-btn { background: transparent; color: #888; border: none; padding: 10px; width: 100%; cursor: pointer; margin-top: 5px; }
-
-        /* Map Popup */
-        .mapboxgl-popup-content { padding: 15px; border-radius: 12px; max-height: 300px; overflow-y: auto; }
-        .popup-img { width: 100%; border-radius: 8px; margin-top: 8px; }
-        .custom-marker {
-            width: 50px; height: 50px; border-radius: 50%; border: 3px solid white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4); background-size: cover; background-position: center; cursor: pointer;
-        }
-
-        /* Helpers */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-marker { width: 50px; height: 50px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.4); background-size: cover; background-position: center; cursor: pointer; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
         .edit-btn { color: #3742fa; } .delete-btn { color: #ff4757; }
     </style>
@@ -98,8 +104,7 @@
 
 <div id="list-view">
     <h1 style="text-align:center; margin-bottom:40px; color:#333;">Our Story ❤️</h1>
-    <div id="timeline-container">
-        </div>
+    <div id="timeline-container"></div>
 </div>
 
 <div id="memory-modal">
@@ -123,7 +128,6 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    // Added 'query' and 'orderBy'
     import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
@@ -185,17 +189,17 @@
             mapView.style.display = 'none';
             listView.style.display = 'block';
             toggleBtn.innerText = "🗺️ Map View";
-            addBtn.style.display = 'none'; // Hide add button in list view (optional)
+            addBtn.style.display = 'none';
         } else {
             mapView.style.display = 'block';
             listView.style.display = 'none';
             toggleBtn.innerText = "📋 List View";
             addBtn.style.display = 'block';
-            map.resize(); // Fix map rendering glitch when showing again
+            map.resize();
         }
     });
 
-    // 2. Add Mode (Only works in Map View)
+    // 2. Add Mode
     addBtn.addEventListener('click', () => {
         isAddingMode = !isAddingMode;
         if (isAddingMode) {
@@ -244,7 +248,7 @@
                 });
             }
             closeModal();
-            loadMemories(); // Refresh both map and list
+            loadMemories();
             alert("Saved!");
         } catch (e) {
             console.error(e);
@@ -267,18 +271,15 @@
         document.getElementById('title').value = data.title;
         document.getElementById('story').value = data.story;
         document.getElementById('date-input').value = data.date ? data.date.split('T')[0] : '';
-        document.getElementById('file-container').style.display = 'none'; // No photo edit yet
+        document.getElementById('file-container').style.display = 'none';
         openModal(true);
     };
 
-    // 5. Load Data (Populates Map AND List)
+    // 5. Load Data
     async function loadMemories() {
-        // Clear Map
         document.querySelectorAll('.mapboxgl-marker').forEach(e => e.remove());
-        // Clear List
         timelineContainer.innerHTML = '';
 
-        // Query: Sort by Date Descending (Newest First)
         const q = query(collection(db, "memories"), orderBy("date", "desc"));
         const querySnapshot = await getDocs(q);
 
@@ -287,7 +288,6 @@
             const id = docSnap.id;
             localMemories[id] = data;
             
-            // Format Date
             const dateObj = data.date ? new Date(data.date) : new Date();
             const dateStr = dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -302,9 +302,20 @@
                 markerEl = new mapboxgl.Marker({ color: "#ff4757" });
             }
             
+            // Build Popup Images HTML
+            let popupImagesHtml = '';
+            if (data.images && data.images.length > 0) {
+                popupImagesHtml += '<div class="popup-img-scroll">';
+                data.images.forEach(img => {
+                    popupImagesHtml += `<img src="${img}" class="popup-img-item" onclick="window.open('${img}')">`;
+                });
+                popupImagesHtml += '</div>';
+            }
+
             const popupHTML = `
                 <h3>${data.title}</h3>
                 <div style="font-size:12px; color:#888; margin-bottom:5px;">${dateStr}</div>
+                ${popupImagesHtml}
                 <p>${data.story}</p>
                 <div style="text-align:right;">
                     <button class="action-btn edit-btn" onclick="editMemory('${id}')">Edit</button>
@@ -346,7 +357,6 @@
         });
     }
 
-    // UI Helpers
     function openModal(isEdit = false) {
         modal.style.display = 'block';
         document.getElementById('modal-title').innerText = isEdit ? "✏️ Edit Memory" : "❤️ Add a Memory";
@@ -374,7 +384,6 @@
         document.getElementById('file-container').style.display = 'block';
     }
 
-    // Start
     loadMemories();
 
 </script>
