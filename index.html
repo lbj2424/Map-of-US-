@@ -48,13 +48,32 @@
             font-size: 16px !important;
         }
 
-        /* --- SHARED POPUP STYLING (Base Styles) --- */
+        /* --- SHARED POPUP STYLING --- */
         .mapboxgl-popup { z-index: 5000; }
+        .mapboxgl-popup-tip { display: none !important; } /* Hide the arrow universally */
+        
         .mapboxgl-popup-content { 
-            padding: 20px; border-radius: 15px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 0; /* Let internal padding handle it */
+            border-radius: 20px; 
+            box-shadow: 0 25px 80px rgba(0,0,0,0.6);
             display: flex; flex-direction: column;
+            overflow: hidden; /* Clean corners */
         }
+        
+        /* THE BIG "X" CLOSE BUTTON */
+        .mapboxgl-popup-close-button {
+            font-size: 30px; /* Big Icon */
+            color: #333;
+            background: rgba(255,255,255,0.9); /* White circle background */
+            border-radius: 50%;
+            width: 45px; height: 45px;
+            display: flex; align-items: center; justify-content: center;
+            top: 15px; right: 15px; /* Spacing from corner */
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .mapboxgl-popup-close-button:hover { background: white; color: red; }
+
         /* Pins */
         .custom-marker {
             width: 55px; height: 55px; border-radius: 50%;
@@ -64,24 +83,20 @@
         }
         .custom-marker:hover { transform: scale(1.1); z-index: 99; }
 
-        /* --- DESKTOP IMAX MODE (Only applies to screens WIDER than 600px) --- */
+        /* --- DESKTOP IMAX MODE (Big Screens) --- */
         @media only screen and (min-width: 601px) {
             .mapboxgl-popup { 
                 max-width: none !important; 
-                width: 90% !important; /* Fill the screen */
+                width: 90% !important; 
                 left: 5% !important; 
                 top: 5% !important; 
                 transform: none !important; 
-                position: fixed !important; /* Lock to screen */
+                position: fixed !important; 
             }
-            .mapboxgl-popup-tip { display: none !important; }
-            
             .mapboxgl-popup-content { 
-                padding: 40px; border-radius: 20px; 
-                height: 85vh; max-height: 85vh; overflow-y: auto; 
-                box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+                padding: 40px; height: 85vh; max-height: 85vh; overflow-y: auto; 
             }
-            .mapboxgl-popup-content h3 { font-size: 42px; margin-bottom: 10px; color: #2d3436; }
+            .mapboxgl-popup-content h3 { font-size: 42px; margin-bottom: 10px; color: #2d3436; margin-top: 0; }
             .popup-date { font-size: 18px; color: #888; font-weight: 500; margin-bottom: 25px; }
             .popup-img-scroll { display: flex; gap: 20px; overflow-x: auto; margin: 0; padding-bottom: 20px; flex-shrink: 0; }
             .popup-img-item { height: 450px; width: auto; border-radius: 12px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
@@ -89,19 +104,34 @@
             .popup-story { font-size: 24px; line-height: 1.6; color: #333; margin-top: 30px; max-width: 1200px; }
         }
 
-        /* --- MOBILE MODE (Only applies to PHONES) --- */
+        /* --- MOBILE IMAX MODE (Phones) --- */
         @media only screen and (max-width: 600px) {
-            /* Mapbox default positioning works automatically here! */
+            .mapboxgl-popup { 
+                max-width: none !important; 
+                width: 95% !important; /* Fill almost entire width */
+                left: 50% !important; /* Center X */
+                top: 50% !important; /* Center Y */
+                transform: translate(-50%, -50%) !important; /* Perfect Center */
+                position: fixed !important;
+            }
             
-            .mapboxgl-popup { max-width: 300px !important; }
-            .mapboxgl-popup-content { padding: 15px; max-height: 400px; overflow-y: auto; }
-            
-            /* Smaller Text & Photos for Phone */
-            .mapboxgl-popup-content h3 { font-size: 20px; margin-top: 0; }
-            .popup-date { font-size: 12px; display: block; margin-bottom: 10px; }
-            .popup-img-scroll { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 10px; }
-            .popup-img-item { height: 120px; width: auto; border-radius: 6px; }
-            .popup-story { font-size: 14px; line-height: 1.5; color: #333; }
+            .mapboxgl-popup-content { 
+                padding: 25px; 
+                max-height: 80vh; /* Fill most of vertical screen */
+                overflow-y: auto; 
+            }
+
+            /* Bigger Mobile Photos */
+            .popup-img-scroll { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; margin-top: 10px; }
+            .popup-img-item { 
+                height: 300px; /* Big photos on phone (was 120px) */
+                width: auto; border-radius: 8px; 
+            }
+
+            /* Bigger Mobile Text */
+            .mapboxgl-popup-content h3 { font-size: 28px; margin-top: 0; margin-bottom: 5px; }
+            .popup-date { font-size: 14px; display: block; margin-bottom: 15px; color: #888; }
+            .popup-story { font-size: 18px; line-height: 1.5; color: #333; }
 
             /* Mobile UI Adjustments */
             #add-mode-btn {
